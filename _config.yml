@@ -1,8 +1,6 @@
 # Site settings
 title: DL for the Sciences Seminar Blog Post WiSe'26
 description: Equivariant Neural Fields for PDE Forecasting
-url: "" # Leave empty for GitHub Pages auto-configuration
-baseurl: "" # Leave empty for GitHub Pages auto-configuration
 baseurl: "/pdeforecasting"
 url: "https://ananya-prashanth.github.io"
 
