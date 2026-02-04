@@ -1,0 +1,37 @@
+# Site settings
+title: ICLR 2026 Blog Post
+description: Equivariant Neural Fields for PDE Forecasting
+url: "" # Leave empty for GitHub Pages auto-configuration
+baseurl: "" # Leave empty for GitHub Pages auto-configuration
+
+# Build settings
+markdown: kramdown
+highlighter: rouge
+
+# Plugins
+plugins:
+  - jekyll-feed
+  - jekyll-seo-tag
+
+# Collections
+collections:
+  posts:
+    output: true
+    permalink: /:year/:month/:day/:title/
+
+# Exclude from processing
+exclude:
+  - Gemfile
+  - Gemfile.lock
+  - node_modules
+  - vendor/bundle/
+  - vendor/cache/
+  - vendor/gems/
+  - vendor/ruby/
+  - README.md
+
+# Kramdown settings
+kramdown:
+  input: GFM
+  syntax_highlighter: rouge
+  math_engine: mathjax
