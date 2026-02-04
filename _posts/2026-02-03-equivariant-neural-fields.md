@@ -7,8 +7,14 @@ author: Ananya Prashanth
 description: Solving partial differential equations on complex geometries by respecting physical symmetries through equivariant neural fields
 math: true
 ---
-
 ## Introduction
+
+<details class="callout tldr">
+<summary><span class="label">TLDR</span></summary>
+
+ENFs address grid/geometry/symmetry limits of standard neural PDE models by encoding geometry-aware latents and decoding equivariantly for continuous queries.
+
+</details>
 
 Partial differential equations (PDEs) are fundamental to understanding and modeling spatiotemporal dynamics across virtually all scientific domains—from fluid mechanics and weather forecasting to biological systems and materials science. Traditionally, these equations are solved using numerical methods like finite element or spectral methods, which require discretization onto computational grids and can be computationally expensive. 
 
@@ -17,6 +23,13 @@ Recent advances in deep learning have opened new possibilities for data-driven P
 In this blog post, we explore the work of Knigge et al. (2024)[^1], which introduces a framework for **space-time continuous PDE forecasting using Equivariant Neural Fields (ENFs)**. This approach combines the flexibility of neural fields with the structured inductive biases of equivariant neural networks, enabling accurate and efficient prediction of PDE dynamics on challenging geometries like spheres, tori, and 3D balls.
 
 ## The Challenge of PDE Forecasting
+
+<details class="callout tldr">
+<summary><span class="label">TLDR</span></summary>
+
+Irregular sampling, complex geometries, and physical symmetries require grid-agnostic, geometry-aware models that can answer continuous queries.
+
+</details>
 
 Consider the task of forecasting weather patterns, ocean currents, or heat diffusion through materials. In each case, we observe a physical field $$\nu(x, t)$$ that evolves over space $$x$$ and time $$t$$ according to some governing PDE. The challenges are multifold:
 
@@ -29,7 +42,21 @@ Traditional grid-based methods like CNNs excel when data is regular and planar, 
 
 ## Background and Motivation
 
+<details class="callout tldr">
+<summary><span class="label">TLDR</span></summary>
+
+Neural fields provide continuous, grid-agnostic representations; adding symmetry-aware inductive biases (equivariance) improves generalization and data efficiency.
+
+</details>
+
 ### Neural Fields for Continuous Representations
+
+<details class="callout tldr">
+<summary><span class="label">TLDR</span></summary>
+
+Neural fields map coordinates to values; conditional neural fields use latent codes to represent multiple signals with continuous evaluation.
+
+</details>
 
 **Neural Fields** (also called coordinate-based neural networks) are continuous representations that map coordinates to field values:
 
@@ -50,6 +77,13 @@ Recent work by Yin et al. (2022)[^2] proposed using conditional neural fields fo
 
 ### The Role of Symmetry in Physics
 
+<details class="callout tldr">
+<summary><span class="label">TLDR</span></summary>
+
+Physical symmetries imply equivariance; enforcing it in networks boosts generalization to transformed inputs and reduces sample complexity.
+
+</details>
+
 Many physical laws exhibit **symmetries**—they remain unchanged under certain transformations. For example:
 
 - **Heat diffusion** is rotationally symmetric: rotating the initial temperature distribution yields a rotated solution
@@ -69,6 +103,13 @@ where $$L_g$$ denotes the action of $$g$$ on the field $$\nu$$. This means: **tr
 
 ## Method Overview
 
+<details class="callout tldr">
+<summary><span class="label">TLDR</span></summary>
+
+Represent states as structured latent point clouds `(pose, context)`, decode with bi-invariant attributes via cross-attention, and evolve latents using an equivariant neural ODE.
+
+</details>
+
 The proposed framework models PDE solutions as flows in a structured latent space that preserves geometric information. The key insight is to represent each field state $$\nu_t$$ using a latent set:
 
 $$z^\nu_t = \{(p_i, c_i)\}_{i=1}^N$$
@@ -84,6 +125,13 @@ This explicit geometric structure enables equivariance throughout the pipeline.
 
 ### Structured Latent Representation
 
+<details class="callout tldr">
+<summary><span class="label">TLDR</span></summary>
+
+Latents are sets of `(p_i, c_i)` where group actions transform poses only; this preserves geometry across the pipeline.
+
+</details>
+
 Unlike prior work that uses unstructured latent vectors, this approach represents states with a **point cloud** in the group space. Each element contains:
 
 1. **Geometric information** ($$p_i$$): Lives on the symmetry group manifold
@@ -96,6 +144,13 @@ $$g \cdot z^\nu = \{(g \cdot p_i, c_i)\}_{i=1}^N$$
 This structure is crucial for maintaining equivariance.
 
 ### Equivariant Neural Fields as Decoders
+
+<details class="callout tldr">
+<summary><span class="label">TLDR</span></summary>
+
+The decoder uses bi-invariant attributes and cross-attention over contexts so outputs commute with group transforms (equivariance by construction).
+
+</details>
 
 The decoder $$f_\theta$$ reconstructs field values from latents via **cross-attention** over **bi-invariant attributes**. A bi-invariant attribute $$a(p_i, x)$$ satisfies:
 
@@ -121,7 +176,37 @@ where queries depend on bi-invariant attributes, and keys/values depend on conte
 
 $$f_\theta(g \cdot x; g \cdot z^\nu) = f_\theta(x; z^\nu)$$
 
+<!-- Side-by-side pseudo-code comparison -->
+<div class="two-col">
+	<div class="col">
+	#### Decoder (pseudo)
+	<pre><code>def decode(x, latents):
+		attrs = [a(pi, x) for pi in latents.poses]
+		q = proj_query(attrs)
+		k,v = proj_key_value(latents.contexts)
+		out = cross_attention(q,k,v)
+		return readout(out)</code></pre>
+	</div>
+	<div class="col">
+	#### Latent ODE (pseudo)
+	<pre><code>def latent_dynamics(z):
+		for i in nodes(z):
+			msgs = [phi(a(i,j))*c_j for j in neighbors]
+			c_i' = aggregate(msgs)
+			p_i' = exp_map(p_i, avg_log_maps(msgs))
+		return z'
+	</code></pre>
+	</div>
+</div>
+
 ### Equivariant Latent Dynamics
+
+<details class="callout tldr">
+<summary><span class="label">TLDR</span></summary>
+
+A message-passing neural ODE updates contexts and poses on the group manifold; the learned vector field is equivariant and commutes with group actions.
+
+</details>
 
 To forecast future states, the method learns a **neural ODE** that evolves latents:
 
@@ -149,6 +234,13 @@ meaning: transforming the initial condition then solving gives the same result a
 
 ### Meta-Learning for Efficient Inference
 
+<details class="callout tldr">
+<summary><span class="label">TLDR</span></summary>
+
+Meta-learning initializes shared parameters so per-sample latent `z0` can be adapted with only a few gradient steps for fast test-time inference.
+
+</details>
+
 To obtain the initial latent $$z_0^\nu$$ from initial condition $$\nu_0$$, the authors use **meta-learning** instead of slow autodecoding:
 
 1. **Outer loop**: Train shared initialization and decoder parameters $$\theta$$
@@ -162,7 +254,21 @@ Visualizing the latent space (via t-SNE) reveals that meta-learning + equivarian
 
 ## Experiments and Results
 
+<details class="callout tldr">
+<summary><span class="label">TLDR</span></summary>
+
+Empirical evaluation shows strong generalization under transforms, robustness to sparse observations, and applicability to complex geometries (spheres, tori, balls).
+
+</details>
+
 ### Experimental Setup
+
+<details class="callout tldr">
+<summary><span class="label">TLDR</span></summary>
+
+Datasets were generated with PDE solvers (py-pde, Dedalus); evaluation uses disjoint train/test initial conditions and MSE on predicted fields.
+
+</details>
 
 The framework was evaluated on multiple PDEs across diverse geometries:
 
@@ -181,6 +287,13 @@ The framework was evaluated on multiple PDEs across diverse geometries:
 - Metrics: Mean Squared Error (MSE) on predictions from initial condition only
 
 ### Generalization Under Geometric Transformations
+
+<details class="callout tldr">
+<summary><span class="label">TLDR</span></summary>
+
+ENFs generalize to spatial transforms not seen during training, exhibiting low test errors where baselines fail.
+
+</details>
 
 **Experiment:** Heat equation on $$\mathbb{R}^2$$ with spatially separated train/test regions.
 
@@ -201,6 +314,13 @@ The equivariant model maintains low error on test conditions (different geometri
 
 ### Robustness and Data Efficiency
 
+<details class="callout tldr">
+<summary><span class="label">TLDR</span></summary>
+
+Equivariant models maintain performance with drastically reduced observations and smaller training sets compared to non-equivariant baselines.
+
+</details>
+
 **Navier-Stokes on $$\mathbb{T}^2$$** with varying observation rates of initial conditions:
 
 | **Model** | 100% observed | 50% observed | 5% observed |
@@ -220,6 +340,13 @@ While grid-based methods (FNO) excel on fully observed regular grids, **equivari
 
 ### Complex Geometries
 
+<details class="callout tldr">
+<summary><span class="label">TLDR</span></summary>
+
+The approach handles spherical and 3D geometries, avoids coordinate singularities, and supports zero-shot super-resolution.
+
+</details>
+
 **Shallow-Water Equations on $$\mathbb{S}^2$$** (global atmospheric flow):
 
 The model handles:
@@ -237,6 +364,13 @@ The model handles:
 The equivariant approach achieves **10× error reduction** by respecting spherical symmetries in 3D—a challenging geometry where coordinate singularities often cause issues.
 
 ## Discussion
+
+<details class="callout tldr">
+<summary><span class="label">TLDR</span></summary>
+
+ENFs deliver physical consistency and data efficiency but require known symmetry groups and come with computational/implementation complexity.
+
+</details>
 
 ### Strengths
 
@@ -262,6 +396,13 @@ The sweet spot for this approach is **scientific applications with known symmetr
 
 ## Conclusion
 
+<details class="callout tldr">
+<summary><span class="label">TLDR</span></summary>
+
+Combining neural fields with equivariant architectures yields geometry-aware, continuous PDE forecasting models that generalize under transforms and work with sparse data.
+
+</details>
+
 Equivariant Neural Fields offer a principled framework for learning continuous spatiotemporal dynamics while respecting physical symmetries. By explicitly encoding geometry in the latent space and ensuring equivariance throughout the architecture, the method achieves:
 
 - Superior generalization to unseen geometric transformations
@@ -272,6 +413,13 @@ Equivariant Neural Fields offer a principled framework for learning continuous s
 This work demonstrates that **combining the flexibility of neural fields with the inductive biases of equivariant architectures** creates powerful models for scientific machine learning. As we push toward learning from real-world observational data—which is invariably sparse, irregular, and governed by physical laws—such physics-informed architectures will become increasingly essential.
 
 ### Future Directions
+
+<details class="callout tldr">
+<summary><span class="label">TLDR</span></summary>
+
+Promising directions include learning symmetries from data, reducing rollout error, and scaling to higher-dimensional systems or real-world datasets.
+
+</details>
 
 - Learning symmetries automatically from data
 - Mitigating error accumulation in long rollouts

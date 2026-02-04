@@ -18,8 +18,122 @@ layout: default
     {% endif %}
   </header>
 
-  <div class="post-content" itemprop="articleBody">
-    {{ content }}
+  <div class="post-layout">
+    <div class="post-main">
+      <div class="post-content" itemprop="articleBody">
+        {{ content }}
+      </div>
+    </div>
+
+    <aside class="post-toc" aria-label="On this page">
+      <div class="toc-inner wrapper">
+        <h4>On this page</h4>
+        <nav id="post-toc"></nav>
+      </div>
+    </aside>
   </div>
+
+  <script>
+    (function(){
+      // Build TOC from h2/h3 inside the post-content
+      var container = document.getElementById('post-toc');
+      if(!container) return;
+      var content = document.querySelector('.post-content');
+      if(!content) return;
+      var headings = content.querySelectorAll('h2, h3');
+      if(!headings.length) { container.innerHTML = '<p>No sections</p>'; return; }
+
+      var ul = document.createElement('ul');
+      ul.className = 'toc-list';
+      var lastLiH2 = null;
+      var h2Links = []; // Track all h2 links for section highlighting
+
+      function slug(text){
+        return text.toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'');
+      }
+
+      headings.forEach(function(h){
+        if(!h.id) h.id = slug(h.textContent || h.innerText || 'section');
+        var a = document.createElement('a');
+        a.href = '#' + h.id;
+        a.textContent = h.textContent || h.innerText;
+        a.className = h.tagName.toLowerCase() === 'h2' ? 'toc-link h2' : 'toc-link h3';
+
+        var li = document.createElement('li');
+        li.appendChild(a);
+
+        if(h.tagName.toLowerCase() === 'h2'){
+          ul.appendChild(li); 
+          lastLiH2 = li;
+          li.classList.add('h2-item');
+          h2Links.push({ link: a, li: li });
+        } else {
+          // h3 -> indent under last h2
+          var sub = lastLiH2 && lastLiH2.querySelector('ul');
+          if(!sub){ sub = document.createElement('ul'); sub.className='toc-sub'; lastLiH2 && lastLiH2.appendChild(sub); }
+          sub.appendChild(li);
+        }
+      });
+
+      container.appendChild(ul);
+
+      // Highlight active heading and show subheadings under current h2
+      var links = container.querySelectorAll('a.toc-link');
+      var idToLink = {};
+      var h2ToHeading = {}; // Map h2 link to its h2 heading element
+      links.forEach(function(l){ idToLink[l.getAttribute('href').slice(1)] = l; });
+      
+      // Build map of h2 links to their heading elements
+      content.querySelectorAll('h2').forEach(function(h2){
+        h2ToHeading[h2.id] = h2;
+      });
+
+      var observer = new IntersectionObserver(function(entries){
+        var currentSection = null;
+        var currentSubsection = null;
+        
+        // Find which h2 section and h3 subsection we're currently in
+        headings.forEach(function(h){
+          var rect = h.getBoundingClientRect();
+          if(rect.top < window.innerHeight / 2){
+            if(h.tagName.toLowerCase() === 'h2'){
+              currentSection = h.id;
+            } else if(h.tagName.toLowerCase() === 'h3'){
+              currentSubsection = h.id;
+            }
+          }
+        });
+
+        // Clear all active classes
+        links.forEach(function(x){ x.classList.remove('active'); });
+        document.querySelectorAll('.h2-item').forEach(function(li){ li.classList.remove('h2-active'); });
+        
+        // Set h2-active for current section and highlight h2
+        if(currentSection){
+          var activeH2Link = idToLink[currentSection];
+          if(activeH2Link){
+            var parentLi = activeH2Link.closest('li.h2-item');
+            if(parentLi) parentLi.classList.add('h2-active');
+            activeH2Link.classList.add('active');
+          }
+        }
+        
+        // Highlight current h3 subsection if in one
+        if(currentSubsection){
+          var activeH3Link = idToLink[currentSubsection];
+          if(activeH3Link){
+            activeH3Link.classList.add('active');
+          }
+        } else if(currentSection){
+          // If no h3, just keep h2 highlighted
+          var activeH2Link = idToLink[currentSection];
+          if(activeH2Link) activeH2Link.classList.add('active');
+        }
+      },{ root:null, rootMargin:'0px 0px 0px 0px', threshold:0 });
+
+      headings.forEach(function(h){ observer.observe(h); });
+
+    })();
+  </script>
 
 </article>
