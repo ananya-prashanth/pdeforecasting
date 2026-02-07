@@ -134,13 +134,37 @@ img{max-width:100%;height:auto;display:block;margin:18px auto;border-radius:6px;
   .post{padding:20px}
   .post-content{max-width:calc(var(--max-width) - 48px)}
   h1{font-size:1.6rem}
+  .site-header .wrapper{flex-direction:column;align-items:flex-start;gap:8px}
+  .site-nav{margin-top:6px}
+  .site-nav a{display:inline-block}
+  .post-layout{grid-template-columns:1fr;gap:20px;padding:0 12px}
+  .post-toc{display:none}
+  .toc-mobile{display:block}
 }
 
 @media screen and (max-width:480px){
   .site-nav a{margin-left:12px;font-size:0.9rem}
   .wrapper{padding:0 12px}
   .post{padding:16px}
+  .site-header .wrapper{align-items:center;text-align:center}
+  .site-nav{width:100%}
+  .site-nav a{margin:0 8px}
+  .site-title{font-size:1rem}
 }
+
+/* Mobile TOC (injected via JS) */
+.toc-mobile{display:none;border-left:4px solid var(--brand-strong);padding:10px;border-radius:10px;margin:12px 0;background:linear-gradient(180deg,#ffffff,#fbfdff);box-shadow:0 8px 24px rgba(16,34,48,0.06)}
+.toc-mobile summary{font-weight:700;cursor:pointer;padding:8px;display:flex;align-items:center;justify-content:space-between;gap:12px}
+.toc-mobile summary::after{content:"\25BE";color:var(--muted);transition:transform .18s ease}
+details.toc-mobile[open] summary::after{transform:rotate(180deg)}
+.toc-mobile .toc-list{margin-top:8px}
+.toc-mobile .toc-list a{padding:8px 10px;color:var(--muted);text-decoration:none;border-left:3px solid transparent;border-radius:6px}
+.toc-mobile .toc-list a:hover{color:var(--text);background:rgba(43,120,198,0.04)}
+.toc-mobile .toc-list a.h3{padding-left:20px;font-size:0.95rem}
+.toc-mobile .toc-list a.active{color:var(--brand);border-left-color:var(--brand);background:linear-gradient(90deg, rgba(43,120,198,0.06), transparent);font-weight:600}
+
+/* Ensure pre/code blocks wrap on small screens */
+pre{white-space:pre-wrap;word-wrap:break-word}
 
 /* Post layout: main + right TOC */
 .post-layout{display:grid;grid-template-columns:calc(var(--max-width) - 40px) 280px;gap:48px;margin:0 auto;max-width:100%;width:100%;padding:0 20px}

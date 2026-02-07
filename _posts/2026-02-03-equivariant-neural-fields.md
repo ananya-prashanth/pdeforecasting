@@ -7,6 +7,7 @@ author: Ananya Prashanth
 description: Solving partial differential equations on complex geometries by respecting physical symmetries through equivariant neural fields
 math: true
 ---
+
 ## Introduction
 
 <details class="callout tldr">
@@ -16,11 +17,19 @@ ENFs address grid/geometry/symmetry limits of standard neural PDE models by enco
 
 </details>
 
-Partial differential equations (PDEs) are fundamental to understanding and modeling spatiotemporal dynamics across virtually all scientific domains—from fluid mechanics and weather forecasting to biological systems and materials science. Traditionally, these equations are solved using numerical methods like finite element or spectral methods, which require discretization onto computational grids and can be computationally expensive. 
+Partial differential equations (PDEs) are fundamental to understanding and modeling spatiotemporal dynamics across virtually all scientific domains: from fluid mechanics and weather forecasting to biological systems and materials science. 
 
-Recent advances in deep learning have opened new possibilities for data-driven PDE solving. However, most existing neural approaches face critical limitations: they rely on regular grids, struggle with complex geometries, and fail to incorporate known physical symmetries—properties that are intrinsic to the systems they model. **What if we could build neural models that naturally respect the geometry and symmetries of physical laws?**
+At their core, PDEs describe how things change over space and time. They are used to model phenomena like heat diffusion, fluid flow, and wave propagation, ie essentially whenever both space and time matter.
 
-In this blog post, we explore the work of Knigge et al. (2024)[^1], which introduces a framework for **space-time continuous PDE forecasting using Equivariant Neural Fields (ENFs)**. This approach combines the flexibility of neural fields with the structured inductive biases of equivariant neural networks, enabling accurate and efficient prediction of PDE dynamics on challenging geometries like spheres, tori, and 3D balls.
+Given an initial state, a PDE specifies how a physical quantity evolves everywhere in space as time moves forward.
+
+Traditionally, PDEs are solved using numerical methods such as finite element or spectral methods[^2]. These approaches discretize the continuous domain onto computational grids and approximate the solution numerically. While highly accurate, such solvers often require dense grids and can be computationally expensive, especially for complex geometries or long time horizons.
+
+![Alt text]({{ site.baseurl }}/assets/images/pde.png)
+
+Recent advances in deep learning have opened new possibilities for data-driven PDE solving[^3]. However, most existing neural approaches face critical limitations: they rely on regular grids, struggle with complex geometries, and fail to incorporate known physical symmetries—properties that are intrinsic to the systems they model. **What if we could build neural models that naturally respect the geometry and symmetries of physical laws?**
+
+In this blog post, we explore the work of Knigge et al. (2024)[^1], which introduces a framework for **space-time continuous PDE forecasting using Equivariant Neural Fields (ENFs)**. This approach combines the flexibility of neural fields[^4] with the structured inductive biases of equivariant neural networks[^5], enabling accurate and efficient prediction of PDE dynamics on challenging geometries like spheres, tori, and 3D balls.
 
 ## The Challenge of PDE Forecasting
 
@@ -38,7 +47,7 @@ Consider the task of forecasting weather patterns, ocean currents, or heat diffu
 3. **Symmetries**: Physical laws remain invariant under certain transformations (rotations, translations)
 4. **Continuous Queries**: We need predictions at arbitrary spatial and temporal locations, not just grid points
 
-Traditional grid-based methods like CNNs excel when data is regular and planar, but struggle with irregular sampling and complex geometries. On the other hand, methods that ignore physical symmetries waste modeling capacity learning patterns that should be known *a priori*.
+Traditional grid-based methods like CNNs[^6] excel when data is regular and planar, but struggle with irregular sampling and complex geometries. On the other hand, methods that ignore physical symmetries waste modeling capacity learning patterns that should be known *a priori*.
 
 ## Background and Motivation
 
@@ -58,7 +67,7 @@ Neural fields map coordinates to values; conditional neural fields use latent co
 
 </details>
 
-**Neural Fields** (also called coordinate-based neural networks) are continuous representations that map coordinates to field values:
+**Neural Fields** (also called coordinate-based neural networks) are continuous representations that map coordinates to field values[^4][^7]:
 
 $$f_\theta: \mathbb{R}^n \rightarrow \mathbb{R}^d$$
 
@@ -73,7 +82,7 @@ The key advantages of neural fields include:
 - **Continuous**: Natural interpolation between sampled points
 - **Memory-efficient**: Compress high-resolution data into compact latent codes
 
-Recent work by Yin et al. (2022)[^2] proposed using conditional neural fields for PDE forecasting by learning dynamics in latent space. However, this approach treats the latent space as an unstructured vector space, ignoring the geometric properties of the underlying physical system.
+Neural fields have been successfully applied to 3D shape representation[^8], novel view synthesis[^9], and various other tasks[^10]. Recent work by Yin et al. (2022)[^11] proposed using conditional neural fields for PDE forecasting by learning dynamics in latent space. However, this approach treats the latent space as an unstructured vector space, ignoring the geometric properties of the underlying physical system.
 
 ### The Role of Symmetry in Physics
 
@@ -96,10 +105,12 @@ $$\mathcal{N}[L_g \nu] = L_g \mathcal{N}[\nu]$$
 
 where $$L_g$$ denotes the action of $$g$$ on the field $$\nu$$. This means: **transforming a solution gives another valid solution**.
 
-**Equivariant neural networks** enforce this property by construction, providing a powerful inductive bias that:
+**Equivariant neural networks**[^5][^12][^13] enforce this property by construction, providing a powerful inductive bias that:
 - Improves generalization to unseen transformations
 - Increases data efficiency
 - Ensures physical consistency
+
+Group equivariant CNNs[^5], steerable CNNs[^14], and E(n)-equivariant graph neural networks[^15] have demonstrated significant benefits in various domains including molecular property prediction[^16] and physical simulation[^17].
 
 ## Method Overview
 
@@ -120,7 +131,7 @@ where:
 
 This explicit geometric structure enables equivariance throughout the pipeline.
 
-![Framework Overview]({{ site.baseurl }}/assets/images/framework_overview.png)
+![Alt text]({{ site.baseurl }}/assets/images/framework.png)
 *Figure 1: The proposed framework represents PDE states as point clouds in group space and models dynamics via equivariant neural ODEs.*
 
 ### Structured Latent Representation
@@ -152,7 +163,7 @@ The decoder uses bi-invariant attributes and cross-attention over contexts so ou
 
 </details>
 
-The decoder $$f_\theta$$ reconstructs field values from latents via **cross-attention** over **bi-invariant attributes**. A bi-invariant attribute $$a(p_i, x)$$ satisfies:
+The decoder $$f_\theta$$ reconstructs field values from latents via **cross-attention**[^18] over **bi-invariant attributes**. A bi-invariant attribute $$a(p_i, x)$$ satisfies:
 
 $$a(p_i, x) = a(g \cdot p_i, g \cdot x) \quad \forall g \in G$$
 
@@ -208,13 +219,13 @@ A message-passing neural ODE updates contexts and poses on the group manifold; t
 
 </details>
 
-To forecast future states, the method learns a **neural ODE** that evolves latents:
+To forecast future states, the method learns a **neural ODE**[^19] that evolves latents:
 
 $$\frac{dz^\nu}{dt} = F_\psi(z^\nu)$$
 
 The vector field $$F_\psi$$ must be equivariant: $$F_\psi(g \cdot z) = g \cdot F_\psi(z)$$.
 
-This is achieved using **message passing** on the latent point cloud:
+This is achieved using **message passing**[^20] on the latent point cloud:
 
 **Context update:**
 
@@ -241,7 +252,7 @@ Meta-learning initializes shared parameters so per-sample latent `z0` can be ada
 
 </details>
 
-To obtain the initial latent $$z_0^\nu$$ from initial condition $$\nu_0$$, the authors use **meta-learning** instead of slow autodecoding:
+To obtain the initial latent $$z_0^\nu$$ from initial condition $$\nu_0$$, the authors use **meta-learning**[^21][^22] instead of slow autodecoding[^8]:
 
 1. **Outer loop**: Train shared initialization and decoder parameters $$\theta$$
 2. **Inner loop**: For each sample, adapt $$z_0^\nu$$ with just 3-4 gradient steps on reconstruction loss
@@ -250,7 +261,7 @@ This provides two benefits:
 - **Fast inference**: Only a few optimization steps needed at test time
 - **Structured latent space**: Forces latents to organize smoothly around the shared initialization
 
-Visualizing the latent space (via t-SNE) reveals that meta-learning + equivariance produce highly structured representations where temporally contiguous states cluster together—simplifying the job of the neural ODE.
+Visualizing the latent space (via t-SNE[^23]) reveals that meta-learning + equivariance produce highly structured representations where temporally contiguous states cluster together—simplifying the job of the neural ODE.
 
 ## Experiments and Results
 
@@ -281,7 +292,7 @@ The framework was evaluated on multiple PDEs across diverse geometries:
 | Convection | Ball $$\mathbb{B}^3$$ | SO(3) |
 
 **Training protocol:**
-- Datasets generated via numerical solvers (py-pde, Dedalus)
+- Datasets generated via numerical solvers (py-pde[^24], Dedalus[^25])
 - Disjoint train/test initial conditions
 - Evaluation on both seen ($$t_{\text{in}}$$) and unseen ($$t_{\text{out}}$$) time horizons
 - Metrics: Mean Squared Error (MSE) on predictions from initial condition only
@@ -325,8 +336,8 @@ Equivariant models maintain performance with drastically reduced observations an
 
 | **Model** | 100% observed | 50% observed | 5% observed |
 |-----------|---------------|--------------|-------------|
-| FNO | 8.44e-05 | 3.20e-02 | 3.84e-01 |
-| G-FNO | **3.15e-05** | 2.32e-02 | 3.40e-01 |
+| FNO[^26] | 8.44e-05 | 3.20e-02 | 3.84e-01 |
+| G-FNO[^27] | **3.15e-05** | 2.32e-02 | 3.40e-01 |
 | DINo | 1.11e-02 | 3.74e-02 | 3.94e-02 |
 | **Ours (equivariant)** | 1.57e-03 | **5.75e-03** | **3.44e-02** |
 
@@ -347,7 +358,7 @@ The approach handles spherical and 3D geometries, avoids coordinate singularitie
 
 </details>
 
-**Shallow-Water Equations on $$\mathbb{S}^2$$** (global atmospheric flow):
+**Shallow-Water Equations on $$\mathbb{S}^2$$**[^28] (global atmospheric flow):
 
 The model handles:
 1. **Spherical geometry** (avoiding polar singularities)
@@ -432,4 +443,57 @@ Promising directions include learning symmetries from data, reducing rollout err
 
 [^1]: Knigge, D. M., Wessels, D. R., Valperga, R., Papa, S., Sonke, J. J., Gavves, E., & Bekkers, E. J. (2024). Space-Time Continuous PDE Forecasting using Equivariant Neural Fields. *arXiv preprint arXiv:2406.06660*.
 
-[^2]: Yin, Y., Kirchmeyer, M., Franceschi, J. Y., Rakotomamonjy, A., & Gallinari, P. (2022). Continuous PDE dynamics forecasting with implicit neural representations. *arXiv preprint arXiv:2209.14855*.
+[^11]: Yin, Y., Kirchmeyer, M., Franceschi, J. Y., Rakotomamonjy, A., & Gallinari, P. (2022). Continuous PDE dynamics forecasting with implicit neural representations. *arXiv preprint arXiv:2209.14855*.
+
+[^2]: Zienkiewicz, O. C., Taylor, R. L., & Zhu, J. Z. (2005). The Finite Element Method: Its Basis and Fundamentals. *Elsevier*.
+
+[^3]: Karniadakis, G. E., Kevrekidis, I. G., Lu, L., Perdikaris, P., Wang, S., & Yang, L. (2021). Physics-informed machine learning. *Nature Reviews Physics*, 3(6), 422-440.
+
+[^4]: Xie, Y., Takikawa, T., Saito, S., Litany, O., Yan, S., Khan, N., et al. (2022). Neural fields in visual computing and beyond. *Computer Graphics Forum*, 41(2), 641-676.
+
+[^5]: Cohen, T., & Welling, M. (2016). Group equivariant convolutional networks. In *International Conference on Machine Learning* (pp. 2990-2999). PMLR.
+
+[^12]: Bronstein, M. M., Bruna, J., Cohen, T., & Veličković, P. (2021). Geometric deep learning: Grids, groups, graphs, geodesics, and gauges. *arXiv preprint arXiv:2104.13478*.
+
+[^6]: Guo, X., Li, W., & Iorio, F. (2016). Convolutional neural networks for steady flow approximation. In *Proceedings of the 22nd ACM SIGKDD International Conference on Knowledge Discovery and Data Mining* (pp. 481-490).
+
+[^7]: Mildenhall, B., Srinivasan, P. P., Tancik, M., Barron, J. T., Ramamoorthi, R., & Ng, R. (2021). NeRF: Representing scenes as neural radiance fields for view synthesis. *Communications of the ACM*, 65(1), 99-106.
+
+[^8]: Park, J. J., Florence, P., Straub, J., Newcombe, R., & Lovegrove, S. (2019). DeepSDF: Learning continuous signed distance functions for shape representation. In *Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition* (pp. 165-174).
+
+[^9]: Mildenhall, B., Srinivasan, P. P., Tancik, M., Barron, J. T., Ramamoorthi, R., & Ng, R. (2020). NeRF: Representing scenes as neural radiance fields for view synthesis. In *European Conference on Computer Vision* (pp. 405-421). Springer.
+
+[^10]: Dupont, E., Goliński, A., Alizadeh, M., Teh, Y. W., & Doucet, A. (2021). COIN: Compression with implicit neural representations. *arXiv preprint arXiv:2103.03123*.
+
+[^13]: Weiler, M., & Cesa, G. (2019). General E(2)-equivariant steerable CNNs. *Advances in Neural Information Processing Systems*, 32.
+
+[^14]: Weiler, M., Geiger, M., Welling, M., Boomsma, W., & Cohen, T. S. (2018). 3D steerable CNNs: Learning rotationally equivariant features in volumetric data. *Advances in Neural Information Processing Systems*, 31.
+
+[^15]: Satorras, V. G., Hoogeboom, E., & Welling, M. (2021). E(n) equivariant graph neural networks. In *International Conference on Machine Learning* (pp. 9323-9332). PMLR.
+
+[^16]: Schütt, K. T., Kindermans, P. J., Sauceda Felix, H. E., Chmiela, S., Tkatchenko, A., & Müller, K. R. (2017). SchNet: A continuous-filter convolutional neural network for modeling quantum interactions. *Advances in Neural Information Processing Systems*, 30.
+
+[^17]: Sanchez-Gonzalez, A., Godwin, J., Pfaff, T., Ying, R., Leskovec, J., & Battaglia, P. (2020). Learning to simulate complex physics with graph networks. In *International Conference on Machine Learning* (pp. 8459-8468). PMLR.
+
+[^18]: Vaswani, A., Shazeer, N., Parmar, N., Uszkoreit, J., Jones, L., Gomez, A. N., et al. (2017). Attention is all you need. *Advances in Neural Information Processing Systems*, 30.
+
+[^19]: Chen, R. T. Q., Rubanova, Y., Bettencourt, J., & Duvenaud, D. K. (2018). Neural ordinary differential equations. *Advances in Neural Information Processing Systems*, 31.
+
+[^20]: Gilmer, J., Schoenholz, S. S., Riley, P. F., Vinyals, O., & Dahl, G. E. (2017). Neural message passing for quantum chemistry. In *International Conference on Machine Learning* (pp. 1263-1272). PMLR.
+
+[^21]: Finn, C., Abbeel, P., & Levine, S. (2017). Model-agnostic meta-learning for fast adaptation of deep networks. In *International Conference on Machine Learning* (pp. 1126-1135). PMLR.
+
+[^22]: Tancik, M., Mildenhall, B., Wang, T., Schmidt, D., Srinivasan, P. P., Barron, J. T., & Ng, R. (2021). Learned initializations for optimizing coordinate-based neural representations. In *Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition* (pp. 2846-2855).
+
+[^23]: Van der Maaten, L., & Hinton, G. (2008). Visualizing data using t-SNE. *Journal of Machine Learning Research*, 9(11), 2579-2605.
+
+[^24]: Zwicker, D. (2020). py-pde: A Python package for solving partial differential equations. *Journal of Open Source Software*, 5(48), 2158.
+
+[^25]: Burns, K. J., Vasil, G. M., Oishi, J. S., Lecoanet, D., & Brown, B. P. (2020). Dedalus: A flexible framework for numerical simulations with spectral methods. *Physical Review Research*, 2(2), 023068.
+
+[^26]: Li, Z., Kovachki, N., Azizzadenesheli, K., Liu, B., Bhattacharya, K., Stuart, A., & Anandkumar, A. (2020). Fourier neural operator for parametric partial differential equations. *arXiv preprint arXiv:2010.08895*.
+
+[^27]: Helwig, J., Zhang, X., Fu, C., Kurtin, J., Wojtowytsch, S., & Ji, S. (2023). Group equivariant Fourier neural operators for partial differential equations. In *International Conference on Machine Learning*. PMLR.
+
+[^28]: Galewsky, J., Scott, R. K., & Polvani, L. M. (2004). An initial-value problem for testing numerical models of the global shallow-water equations. *Tellus A: Dynamic Meteorology and Oceanography*, 56(5), 429-440.
+

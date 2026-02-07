@@ -1,6 +1,6 @@
 # Getting Your Blog Post Live - Complete Guide
 
-This guide will walk you through deploying your ICLR blog post to GitHub Pages step by step.
+This guide will walk you through deploying your blog post to GitHub Pages step by step.
 
 ## What You Have
 

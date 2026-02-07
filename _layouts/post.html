@@ -46,7 +46,6 @@ layout: default
       var ul = document.createElement('ul');
       ul.className = 'toc-list';
       var lastLiH2 = null;
-      var h2Links = []; // Track all h2 links for section highlighting
 
       function slug(text){
         return text.toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'');
@@ -63,10 +62,9 @@ layout: default
         li.appendChild(a);
 
         if(h.tagName.toLowerCase() === 'h2'){
-          ul.appendChild(li); 
+          ul.appendChild(li);
           lastLiH2 = li;
           li.classList.add('h2-item');
-          h2Links.push({ link: a, li: li });
         } else {
           // h3 -> indent under last h2
           var sub = lastLiH2 && lastLiH2.querySelector('ul');
@@ -77,22 +75,37 @@ layout: default
 
       container.appendChild(ul);
 
+      // For small screens, inject a collapsible TOC at the top of the post content
+      if(window.innerWidth <= 900){
+        try{
+          var details = document.createElement('details');
+          details.className = 'toc-mobile callout';
+          var summary = document.createElement('summary');
+          summary.textContent = 'On this page';
+          details.appendChild(summary);
+          var clone = ul.cloneNode(true);
+          details.appendChild(clone);
+          content.insertBefore(details, content.firstChild);
+          // Hide the aside (desktop) TOC if present
+          var aside = document.querySelector('.post-toc');
+          if(aside) aside.style.display = 'none';
+        }catch(e){ /* ignore */ }
+      }
+
       // Highlight active heading and show subheadings under current h2
-      var links = container.querySelectorAll('a.toc-link');
-      var idToLink = {};
-      var h2ToHeading = {}; // Map h2 link to its h2 heading element
-      links.forEach(function(l){ idToLink[l.getAttribute('href').slice(1)] = l; });
-      
-      // Build map of h2 links to their heading elements
-      content.querySelectorAll('h2').forEach(function(h2){
-        h2ToHeading[h2.id] = h2;
-      });
+      var links = document.querySelectorAll('a.toc-link');
+      var idToLinks = {};
+      links.forEach(function(l){ var id = l.getAttribute('href').slice(1); if(!idToLinks[id]) idToLinks[id] = []; idToLinks[id].push(l); });
+
+      // Build map of h2 ids to their heading elements
+      var h2Map = {};
+      content.querySelectorAll('h2').forEach(function(h2){ h2Map[h2.id] = h2; });
 
       var observer = new IntersectionObserver(function(entries){
         var currentSection = null;
         var currentSubsection = null;
-        
-        // Find which h2 section and h3 subsection we're currently in
+
+        // Find which h2 section and h3 subsection we're currently in (based on vertical position)
         headings.forEach(function(h){
           var rect = h.getBoundingClientRect();
           if(rect.top < window.innerHeight / 2){
@@ -107,27 +120,24 @@ layout: default
         // Clear all active classes
         links.forEach(function(x){ x.classList.remove('active'); });
         document.querySelectorAll('.h2-item').forEach(function(li){ li.classList.remove('h2-active'); });
-        
-        // Set h2-active for current section and highlight h2
+
+        // Set h2-active for current section and highlight h2 (apply to all matching TOC instances)
         if(currentSection){
-          var activeH2Link = idToLink[currentSection];
-          if(activeH2Link){
-            var parentLi = activeH2Link.closest('li.h2-item');
-            if(parentLi) parentLi.classList.add('h2-active');
-            activeH2Link.classList.add('active');
+          // add active to all links for this id
+          if(idToLinks[currentSection]){
+            idToLinks[currentSection].forEach(function(link){ link.classList.add('active'); });
           }
+          // mark parent li.h2-item elements that contain this link
+          document.querySelectorAll('li.h2-item').forEach(function(li){ if(li.querySelector('a[href="#'+currentSection+'"]')) li.classList.add('h2-active'); });
         }
-        
-        // Highlight current h3 subsection if in one
+
+        // Highlight current h3 subsection if in one (apply to all matching links)
         if(currentSubsection){
-          var activeH3Link = idToLink[currentSubsection];
-          if(activeH3Link){
-            activeH3Link.classList.add('active');
+          if(idToLinks[currentSubsection]){
+            idToLinks[currentSubsection].forEach(function(link){ link.classList.add('active'); });
           }
         } else if(currentSection){
-          // If no h3, just keep h2 highlighted
-          var activeH2Link = idToLink[currentSection];
-          if(activeH2Link) activeH2Link.classList.add('active');
+          // If no h3, just keep h2 highlighted (already done above)
         }
       },{ root:null, rootMargin:'0px 0px 0px 0px', threshold:0 });
 
