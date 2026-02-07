@@ -1,4 +1,4 @@
-# ICLR 2026 Blog Post: Equivariant Neural Fields for PDE Forecasting
+# Blog Post: Equivariant Neural Fields for PDE Forecasting
 
 This repository contains a blog post for the Deep Learning for the Sciences seminar, covering the paper "Space-Time Continuous PDE Forecasting using Equivariant Neural Fields" by Knigge et al. (2024).
 
