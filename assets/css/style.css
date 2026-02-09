@@ -9,14 +9,14 @@
   --max-width: 900px;
 }
 
-@import url('https://fonts.googleapis.com/css2?family=Vidaloka&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Fira+Code:wght@400;500&display=swap');
 
 /* Base */
 html,body{
   height:100%;
 }
 body {
-  font-family: 'Vidaloka', serif;
+  font-family: 'Inter', ui-sans-serif, system-ui, -apple-system, sans-serif;
   line-height: 1.7;
   color: var(--text);
   background: linear-gradient(180deg,var(--bg),#f6fbff 40%);
@@ -93,7 +93,7 @@ code{
   color:#0b2540;
   padding:0.15em 0.4em;
   border-radius:4px;
-  font-family:SFMono-Regular,Menlo,Monaco,Consolas,"Liberation Mono",monospace;
+  font-family:'Fira Code',monospace;
   font-size:0.95em;
 }
 pre{
@@ -102,7 +102,7 @@ pre{
   padding:16px;
   border-radius:8px;
   overflow:auto;
-  font-family:SFMono-Regular,Menlo,Monaco,Consolas,monospace;
+  font-family:'Fira Code',monospace;
   font-size:0.9em;
   line-height:1.45;
 }
